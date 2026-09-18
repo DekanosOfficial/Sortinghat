@@ -12,6 +12,8 @@ categories = {
     "Videos": [".mp4"],
     "Music": [".mp3", ".wav", ".flac", ".m4a"],
     "Documents": [".pdf", ".docx", ".doc", ".txt"],
+    "Installers": [".apk", ".msi", ".exe"],
+    "Archives": [".zip", ".7zip"],
 }
 
 destinations = {
@@ -19,6 +21,9 @@ destinations = {
     "Music": Path.home() / "Music",
     "Pictures": Path.home() / "Pictures",
     "Videos": Path.home() / "Videos",
+    "Installers": downloads / "Installers",
+    "Archives": downloads / "Archives",
+    "Other": downloads / "Other",
 }
 
 # Store files and their categories
@@ -63,6 +68,9 @@ if prompt == "y":
 
         # Get the windows folder for this category
         destination = destinations[category]
+
+        if not destination.exists():
+            destination.mkdir()
 
         # Create the path where the file will be moved
         new_path = destination / item.name
