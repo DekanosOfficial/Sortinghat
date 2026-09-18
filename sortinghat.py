@@ -4,16 +4,21 @@ import shutil
 # Get the path to the user's Downloads folder
 downloads = Path.home() / "Downloads"
 
+
 # Define which file extensions belong to each category
 categories = {
-    "Installers": [".exe", ".msi"],
-    "Archives": [".zip"],
-    "Web": [".html"],
-    "Images": [".jpeg", ".gif", ".jpg", ".png", ".webp"],
+
+    "Pictures": [".jpeg", ".gif", ".jpg", ".png", ".webp"],
     "Videos": [".mp4"],
-    "Audio": [".mp3", ".wav", ".flac", ".m4a"],
+    "Music": [".mp3", ".wav", ".flac", ".m4a"],
     "Documents": [".pdf", ".docx", ".doc", ".txt"],
-    "Torrents": [".torrent"],
+}
+
+destinations = {
+    "Documents": Path.home() / "Documents",
+    "Music": Path.home() / "Music",
+    "Pictures": Path.home() / "Pictures",
+    "Videos": Path.home() / "Videos",
 }
 
 # Store files and their categories
@@ -56,11 +61,8 @@ if prompt == "y":
     # Go through every file we found
     for item, category in files_to_move:
 
-        # Create the category folder path
-        destination = downloads / category
-
-        # Create the folder if it doesn't exist
-        destination.mkdir(exist_ok=True)
+        # Get the windows folder for this category
+        destination = destinations[category]
 
         # Create the path where the file will be moved
         new_path = destination / item.name
@@ -88,3 +90,10 @@ if prompt == "y":
         print(f"{item.name} → {new_path.name}")
 
     print("\nDone!")
+
+
+
+
+
+
+    
