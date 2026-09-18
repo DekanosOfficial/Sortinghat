@@ -13,7 +13,7 @@ categories = {
     "Music": [".mp3", ".wav", ".flac", ".m4a"],
     "Documents": [".pdf", ".docx", ".doc", ".txt"],
     "Installers": [".apk", ".msi", ".exe"],
-    "Archives": [".zip", ".7zip"],
+    "Archives": [".zip", ".7z"],
 }
 
 destinations = {
