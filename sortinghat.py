@@ -1,11 +1,10 @@
 from pathlib import Path
 import shutil
-import logging
 
-# get the path to the user's downloads folder
+# Get the path to the user's Downloads folder
 downloads = Path.home() / "Downloads"
 
-# Define which fiel extension belongs to which category
+# Define which file extensions belong to each category
 categories = {
     "Installers": [".exe", ".msi"],
     "Archives": [".zip"],
@@ -17,56 +16,75 @@ categories = {
     "Torrents": [".torrent"],
 }
 
-def categorize_file(file):
-    for catergory, extensions in categories.items():
-        if file.suffix.lower() in extensions:
-            return catergory
+# Store files and their categories
+files_to_move = []
 
-    return "Other"
+# Go through each item inside the Downloads folder
+for item in downloads.iterdir():
 
-def scan_downloads():
-    files_to_move = []
+    # Only work with files, not folders
+    if item.is_file():
 
-    for item in downloads.iterdir():
+        # Assume the file doesn't have a category
+        category_found = None
 
-        if item.name == "sortinghat.py":
-            continue
+        # Go through each category and its list of extensions
+        for category, extensions in categories.items():
 
-        if not item.is_file():
-            continue
+            # Check if the file's extension belongs to this category
+            if item.suffix.lower() in extensions:
+                category_found = category
+                break
 
-        category = categorize_file(item)
+        # If no category was found, put the file in Other
+        if category_found is None:
+            category_found = "Other"
 
-        files_to_move.append((item, category))
+        # Store the file and its category
+        files_to_move.append((item, category_found))
 
-    return files_to_move
+        # Show what the program found
+        print(f"{item.name} → {category_found}")
 
-def show_summary(files_to_move):
-    file_counts ={}
 
+# Ask the user if they want to organize their Downloads folder
+prompt = input("\nMove these files? (y/n): ").lower()
+
+# Only start if the user enters "y"
+if prompt == "y":
+
+    # Go through every file we found
     for item, category in files_to_move:
-        file_counts[category] = file_counts.get(category, 0) + 1
-    print("\nSortingHat")
-    print("-------------------")
 
-    for category, count in file_counts.items():
-        print(f"{category}: {count}")
+        # Create the category folder path
+        destination = downloads / category
 
-    print(f"\nTotal: {len(files_to_move)} files")
+        # Create the folder if it doesn't exist
+        destination.mkdir(exist_ok=True)
 
-def main():
+        # Create the path where the file will be moved
+        new_path = destination / item.name
 
-    files_to_move = scan_downloads()
+        # Check if a file with the same name already exists
+        if new_path.exists():
 
-    show_summary(files_to_move)
+            # Start duplicate counter
+            counter = 1
 
-    prompt = input("\nMove these files? (y/n)\n>> ").lower()
+            # Keep trying new names until we find one that doesn't exist
+            while True:
+                new_name = f"{item.stem}_{counter}{item.suffix}"
+                new_path = destination / new_name
 
-    if prompt == "y":
-        # move_files(files_to_move)
-        print("test move")
-    else:
-        print("Nothing was moved.")
+                if not new_path.exists():
+                    break
 
-if __name__ == "__main__":
-    main()
+                counter += 1
+
+        # Move the file into the folder
+        shutil.move(item, new_path)
+
+        # Tell the user what happened
+        print(f"{item.name} → {new_path.name}")
+
+    print("\nDone!")
