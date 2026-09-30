@@ -26,82 +26,82 @@ destinations = {
     "Other": downloads / "Other",
 }
 
-# Store files and their categories
-files_to_move = []
+def categorize_file(item):
+    for category, extensions in categories.items():
+        if item.suffix.lower() in extensions:
+            return category
 
-# Go through each item inside the Downloads folder
-for item in downloads.iterdir():
+    return "Other"
 
-    # Only work with files, not folders
-    if item.is_file():
+def scan_downloads():
+    # Store files and their categories
+    files_to_move = []
 
-        # Assume the file doesn't have a category
-        category_found = None
+    # Go through each item inside the Downloads folder
+    for item in downloads.iterdir():
 
-        # Go through each category and its list of extensions
-        for category, extensions in categories.items():
+        # Only work with files, not folders
+        if item.is_file():
 
-            # Check if the file's extension belongs to this category
-            if item.suffix.lower() in extensions:
-                category_found = category
-                break
+            category_found = categorize_file(item)
 
-        # If no category was found, put the file in Other
-        if category_found is None:
-            category_found = "Other"
+            # Store the file and its category
+            files_to_move.append((item, category_found))
 
-        # Store the file and its category
-        files_to_move.append((item, category_found))
+            # Show what the program found
+            print(f"{item.name} → {category_found}")
 
-        # Show what the program found
-        print(f"{item.name} → {category_found}")
-
-
-# Ask the user if they want to organize their Downloads folder
-prompt = input("\nMove these files? (y/n): ").lower()
-
-# Only start if the user enters "y"
-if prompt == "y":
-
-    # Go through every file we found
-    for item, category in files_to_move:
-
-        # Get the windows folder for this category
-        destination = destinations[category]
-
-        if not destination.exists():
-            destination.mkdir()
-
-        # Create the path where the file will be moved
-        new_path = destination / item.name
-
-        # Check if a file with the same name already exists
-        if new_path.exists():
-
-            # Start duplicate counter
-            counter = 1
-
-            # Keep trying new names until we find one that doesn't exist
-            while True:
-                new_name = f"{item.stem}_{counter}{item.suffix}"
-                new_path = destination / new_name
-
-                if not new_path.exists():
-                    break
-
-                counter += 1
-
-        # Move the file into the folder
-        shutil.move(item, new_path)
-
-        # Tell the user what happened
-        print(f"{item.name} → {new_path.name}")
-
-    print("\nDone!")
+    return files_to_move
 
 
 
+def move_files(files_to_save):
 
 
+    # Ask the user if they want to organize their Downloads folder
+    prompt = input("\nMove these files? (y/n): ").lower()
 
-    
+    # Only start if the user enters "y"
+    if prompt == "y":
+
+        # Go through every file we found
+        for item, category in files_to_save:
+
+            # Get the windows folder for this category
+            destination = destinations[category]
+
+            if not destination.exists():
+                destination.mkdir()
+
+            # Create the path where the file will be moved
+            new_path = destination / item.name
+
+            # Check if a file with the same name already exists
+            if new_path.exists():
+
+                # Start duplicate counter
+                counter = 1
+
+                # Keep trying new names until we find one that doesn't exist
+                while True:
+                    new_name = f"{item.stem}_{counter}{item.suffix}"
+                    new_path = destination / new_name
+
+                    if not new_path.exists():
+                        break
+
+                    counter += 1
+
+            # Move the file into the folder
+            shutil.move(item, new_path)
+
+            # Tell the user what happened
+            print(f"{item.name} → {new_path.name}")
+
+        print("\nDone!")
+
+def main():
+    files_to_move = scan_downloads()
+    move_files(files_to_move)
+
+main()
