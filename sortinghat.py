@@ -63,68 +63,87 @@ def scan_downloads():
             # Store the file and its category
             files_to_move.append((item, category_found))
 
-            # Show what the program found
-            print(f"{item.name} → {category_found}")
 
     return files_to_move, category_counts
 
 
 
-def move_files(files_to_save):
+def move_files(files_to_save, total_files):
 
+    while True:
+        
+        # Ask the user if they want to organize their Downloads folder
+        prompt = input(f"\nMove these {total_files} files? (y/n): ").strip().lower()
 
-    # Ask the user if they want to organize their Downloads folder
-    prompt = input("\nMove these files? (y/n): ").lower()
+        if prompt not in ("y", "n"):
+            print("Please enter y or n.")
+            continue
 
-    # Only start if the user enters "y"
-    if prompt == "y":
+        # Only start if the user enters "y"
+        if prompt == "y":
 
-        # Go through every file we found
-        for item, category in files_to_save:
+            # Go through every file we found
+            for item, category in files_to_save:
 
-            # Get the windows folder for this category
-            destination = destinations[category]
+                # Get the windows folder for this category
+                destination = destinations[category]
 
-            if not destination.exists():
-                destination.mkdir()
+                if not destination.exists():
+                    destination.mkdir()
 
-            # Create the path where the file will be moved
-            new_path = destination / item.name
+                # Create the path where the file will be moved
+                new_path = destination / item.name
 
-            # Check if a file with the same name already exists
-            if new_path.exists():
+                # Check if a file with the same name already exists
+                if new_path.exists():
 
-                # Start duplicate counter
-                counter = 1
+                    # Start duplicate counter
+                    counter = 1
 
-                # Keep trying new names until we find one that doesn't exist
-                while True:
-                    new_name = f"{item.stem}_{counter}{item.suffix}"
-                    new_path = destination / new_name
+                    # Keep trying new names until we find one that doesn't exist
+                    while True:
+                        new_name = f"{item.stem}_{counter}{item.suffix}"
+                        new_path = destination / new_name
 
-                    if not new_path.exists():
-                        break
+                        if not new_path.exists():
+                            break
 
-                    counter += 1
+                        counter += 1
+                try: 
+                    # Move the file into the folder
+                    shutil.move(item, new_path)
 
-            # Move the file into the folder
-            shutil.move(item, new_path)
+                    logging.info(f"{item.name} → {category}")
 
-            logging.info(f"{item.name} → {category}")
+                    # Tell the user what happened
+                    print(f"{item.name} → {new_path.name}")
 
-            # Tell the user what happened
-            print(f"{item.name} → {new_path.name}")
+                except Exception as error:
+                    logging.error(f"{item.name} → FAILED: {error}")
+                    print(f"Could not move {item.name}: {error}")
 
-        print("\nDone!")
+            print("\nDone!")
+            break
+
+        else:
+            print("Cancelled.")
+            break
 
 def main():
     files_to_move, category_counts = scan_downloads()
-    print("\nSummary")
+    total_files = len(files_to_move)
+
+    if total_files == 0:
+        print("No files to organise.")
+        return
+
+    print(f"\nFound {total_files} files in {downloads}")
+    print("Summary:")
     print("="*23)
 
     for category, count in category_counts.items():
         print(f"{category}: {count}")
     print("="*23)    
-    move_files(files_to_move)
+    move_files(files_to_move, total_files)
     
 main()
