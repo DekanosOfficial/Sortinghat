@@ -69,7 +69,7 @@ def scan_downloads():
     return files_to_move, category_counts
 
 def get_unique_path(destination, item):
-# Create the path where the file will be moved
+    # Create the path where the file will be moved
     new_path = destination / item.name
 
     # Check if a file with the same name already exists
@@ -92,9 +92,10 @@ def get_unique_path(destination, item):
 
 def create_destination(destination):
     if not destination.exists():
-        destination.mkdir()
+        destination.mkdir(exist_ok = True)
 
-def move_files(files_to_save, total_files):
+def move_files(files_to_move):
+    total_files = len(files_to_move)
 
     while True:
         
@@ -111,7 +112,7 @@ def move_files(files_to_save, total_files):
             failed = 0
 
             # Go through every file we found
-            for item, category in files_to_save:
+            for item, category in files_to_move:
 
                 # Get the windows folder for this category
                 destination = destinations[category]
@@ -146,6 +147,14 @@ def move_files(files_to_save, total_files):
             print("Cancelled.")
             break
 
+def display_summary(category_counts):
+    print("Summary:")
+    print("="*23)
+
+    for category, count in category_counts.items():
+        print(f"{category}: {count}")
+    print("="*23)   
+
 def main():
     files_to_move, category_counts = scan_downloads()
     total_files = len(files_to_move)
@@ -155,12 +164,10 @@ def main():
         return
 
     print(f"\nFound {total_files} files in {downloads}")
-    print("Summary:")
-    print("="*23)
 
-    for category, count in category_counts.items():
-        print(f"{category}: {count}")
-    print("="*23)    
-    move_files(files_to_move, total_files)
-    
-main()
+    display_summary(category_counts)
+     
+    move_files(files_to_move)
+
+if __name__ == "__main__":
+    main()
