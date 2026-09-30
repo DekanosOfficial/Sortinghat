@@ -22,7 +22,8 @@ categories = {
     "Documents": [".pdf", ".docx", ".doc", ".txt"],
     "Installers": [".apk", ".msi", ".exe"],
     "Archives": [".zip", ".7z"],
-    "Logs": [".log"]
+    "Logs": [".log"],
+    "Bitmap": [".bmp"]
 }
 
 destinations = {
@@ -34,6 +35,7 @@ destinations = {
     "Installers": downloads / "Installers",
     "Archives": downloads / "Archives",
     "Other": downloads / "Other",
+    "Bitmap": downloads / "Bitmap"
 }
 
 def categorize_file(item):
@@ -66,7 +68,31 @@ def scan_downloads():
 
     return files_to_move, category_counts
 
+def get_unique_path(destination, item):
+# Create the path where the file will be moved
+    new_path = destination / item.name
 
+    # Check if a file with the same name already exists
+    if new_path.exists():
+
+        # Start duplicate counter
+        counter = 1
+
+        # Keep trying new names until we find one that doesn't exist
+        while True:
+            new_name = f"{item.stem}_{counter}{item.suffix}"
+            new_path = destination / new_name
+
+            if not new_path.exists():
+                break
+
+            counter += 1
+
+    return new_path
+
+def create_destination(destination):
+    if not destination.exists():
+        destination.mkdir()
 
 def move_files(files_to_save, total_files):
 
@@ -90,27 +116,10 @@ def move_files(files_to_save, total_files):
                 # Get the windows folder for this category
                 destination = destinations[category]
 
-                if not destination.exists():
-                    destination.mkdir()
+                create_destination(destination)
 
-                # Create the path where the file will be moved
-                new_path = destination / item.name
-
-                # Check if a file with the same name already exists
-                if new_path.exists():
-
-                    # Start duplicate counter
-                    counter = 1
-
-                    # Keep trying new names until we find one that doesn't exist
-                    while True:
-                        new_name = f"{item.stem}_{counter}{item.suffix}"
-                        new_path = destination / new_name
-
-                        if not new_path.exists():
-                            break
-
-                        counter += 1
+                new_path = get_unique_path(destination, item)
+                
                 try: 
                     # Move the file into the folder
                     shutil.move(item, new_path)
@@ -123,7 +132,7 @@ def move_files(files_to_save, total_files):
 
                 except Exception as error:
                     failed += 1
-                    logging.error(f"{item.name} → FAILED: → {new_path} → {error}")
+                    logging.error(f"{item.name} → FAILED: {new_path} → {error}")
                     print(f"Could not move {item.name}: {error}")
 
 
