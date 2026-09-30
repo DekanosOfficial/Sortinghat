@@ -81,6 +81,8 @@ def move_files(files_to_save, total_files):
 
         # Only start if the user enters "y"
         if prompt == "y":
+            moved = 0
+            failed = 0
 
             # Go through every file we found
             for item, category in files_to_save:
@@ -112,17 +114,23 @@ def move_files(files_to_save, total_files):
                 try: 
                     # Move the file into the folder
                     shutil.move(item, new_path)
+                    moved += 1
 
-                    logging.info(f"{item.name} → {category}")
+                    logging.info(f"{item.name} → {new_path}")
 
                     # Tell the user what happened
-                    print(f"{item.name} → {new_path.name}")
+                    print(f"{item.name} → {new_path}")
 
                 except Exception as error:
-                    logging.error(f"{item.name} → FAILED: {error}")
+                    failed += 1
+                    logging.error(f"{item.name} → FAILED: → {new_path} → {error}")
                     print(f"Could not move {item.name}: {error}")
 
+
             print("\nDone!")
+            print(f"Moved: {moved}")
+            if failed > 0:
+                print(f"Failed: {failed}")
             break
 
         else:
