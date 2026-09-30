@@ -1,5 +1,13 @@
 from pathlib import Path
 import shutil
+import logging
+
+log_file = Path.home() / "Documents" / "Sortinghat.log"
+logging.basicConfig(
+    filename=log_file,
+    level=logging.INFO,
+    format="%(asctime)s | %(message)s"
+)
 
 # Get the path to the user's Downloads folder
 downloads = Path.home() / "Downloads"
@@ -14,6 +22,7 @@ categories = {
     "Documents": [".pdf", ".docx", ".doc", ".txt"],
     "Installers": [".apk", ".msi", ".exe"],
     "Archives": [".zip", ".7z"],
+    "Logs": [".log"]
 }
 
 destinations = {
@@ -21,6 +30,7 @@ destinations = {
     "Music": Path.home() / "Music",
     "Pictures": Path.home() / "Pictures",
     "Videos": Path.home() / "Videos",
+    "Logs": downloads / "Logs",
     "Installers": downloads / "Installers",
     "Archives": downloads / "Archives",
     "Other": downloads / "Other",
@@ -37,6 +47,9 @@ def scan_downloads():
     # Store files and their categories
     files_to_move = []
 
+    category_counts = {}
+
+
     # Go through each item inside the Downloads folder
     for item in downloads.iterdir():
 
@@ -45,13 +58,15 @@ def scan_downloads():
 
             category_found = categorize_file(item)
 
+            category_counts[category_found] = category_counts.get(category_found, 0) + 1
+
             # Store the file and its category
             files_to_move.append((item, category_found))
 
             # Show what the program found
             print(f"{item.name} → {category_found}")
 
-    return files_to_move
+    return files_to_move, category_counts
 
 
 
@@ -95,13 +110,21 @@ def move_files(files_to_save):
             # Move the file into the folder
             shutil.move(item, new_path)
 
+            logging.info(f"{item.name} → {category}")
+
             # Tell the user what happened
             print(f"{item.name} → {new_path.name}")
 
         print("\nDone!")
 
 def main():
-    files_to_move = scan_downloads()
-    move_files(files_to_move)
+    files_to_move, category_counts = scan_downloads()
+    print("\nSummary")
+    print("="*23)
 
+    for category, count in category_counts.items():
+        print(f"{category}: {count}")
+    print("="*23)    
+    move_files(files_to_move)
+    
 main()
