@@ -9,9 +9,26 @@ logging.basicConfig(
     format="%(asctime)s | %(message)s"
 )
 
-# Get the path to the user's Downloads folder
-downloads = Path.home() / "Downloads"
+# Get the path to folder being organised
+folders = {
+    "Downloads" : Path.home() / "Downloads",
+    "Desktop": Path.home() / "Desktop",
+    "Documents": Path.home() / "Documents",
+    "Videos": Path.home() / "Videos",
+    "Pictures": Path.home() / "Pictures",
+    "Music": Path.home() / "Music"
+}
 
+ignore_extensions = {
+    ".lnk",
+    ".url",
+    ".db",
+    ".ini"
+}
+
+ignore_files = {
+    "SortingHat.log"
+}
 
 # Define which file extensions belong to each category
 categories = {
@@ -23,7 +40,8 @@ categories = {
     "Installers": [".apk", ".msi", ".exe"],
     "Archives": [".zip", ".7z"],
     "Logs": [".log"],
-    "Bitmap": [".bmp"]
+    "Bitmap": [".bmp"],
+    "DiskImages": [".iso"]
 }
 
 destinations = {
@@ -31,11 +49,11 @@ destinations = {
     "Music": Path.home() / "Music",
     "Pictures": Path.home() / "Pictures",
     "Videos": Path.home() / "Videos",
-    "Logs": downloads / "Logs",
-    "Installers": downloads / "Installers",
-    "Archives": downloads / "Archives",
-    "Other": downloads / "Other",
-    "Bitmap": downloads / "Bitmap"
+    "Logs": folders["Downloads"] / "Logs",
+    "Installers": folders["Downloads"] / "Installers",
+    "Archives": folders["Downloads"] / "Archives",
+    "Other": folders["Downloads"] / "Other",
+    "DiskImages": folders["Downloads"] / "DiskImages"
 }
 
 def categorize_file(item):
@@ -45,20 +63,30 @@ def categorize_file(item):
 
     return "Other"
 
-def scan_downloads():
+def scan_folder(folder):
+    already_organized = 0
+
     # Store files and their categories
     files_to_move = []
 
     category_counts = {}
 
 
-    # Go through each item inside the Downloads folder
-    for item in downloads.iterdir():
+    # Go through each item inside the folder
+    for item in folder.iterdir():
 
         # Only work with files, not folders
-        if item.is_file():
+        if (
+            item.is_file()
+            and item.suffix.lower() not in ignore_extensions
+            and item.name not in ignore_files
+            ):
 
             category_found = categorize_file(item)
+
+            if item.parent == destinations.get(category_found):
+                already_organized += 1
+                continue
 
             category_counts[category_found] = category_counts.get(category_found, 0) + 1
 
@@ -66,7 +94,7 @@ def scan_downloads():
             files_to_move.append((item, category_found))
 
 
-    return files_to_move, category_counts
+    return files_to_move, category_counts, already_organized
 
 def get_unique_path(destination, item):
     # Create the path where the file will be moved
@@ -94,13 +122,13 @@ def create_destination(destination):
     if not destination.exists():
         destination.mkdir(exist_ok = True)
 
-def move_files(files_to_move):
+def move_files(files_to_move, folder, dry_run=False):
     total_files = len(files_to_move)
 
     while True:
         
-        # Ask the user if they want to organize their Downloads folder
-        prompt = input(f"\nMove these {total_files} files? (y/n): ").strip().lower()
+        action = "Preview" if dry_run else "Move"
+        prompt = input(f"\n{action} these {total_files} files from {folder}? (y/n): ").strip().lower() 
 
         if prompt not in ("y", "n"):
             print("Please enter y or n.")
@@ -110,6 +138,14 @@ def move_files(files_to_move):
         if prompt == "y":
             moved = 0
             failed = 0
+
+            if dry_run:
+                for item, category in files_to_move:
+                    destination = destinations[category]
+                    new_path = get_unique_path(destination, item)
+                    print(f"Would move: {item.name} → {new_path}")
+
+                break
 
             # Go through every file we found
             for item, category in files_to_move:
@@ -156,18 +192,44 @@ def display_summary(category_counts):
     print("="*23)   
 
 def main():
-    files_to_move, category_counts = scan_downloads()
+    print("Choose a folder to organize:")
+    for number, folder_name in enumerate(folders, start=1):
+        print(f"{number}. {folder_name}")
+
+    choice = input("Enter your choice: ")
+
+    if not choice.isdigit() or not 1 <= int(choice) <= len(folders):
+        print("Invalid choice.")
+        return
+
+    choice = int(choice)
+
+    folder_name = list(folders)[choice - 1]
+    folder = folders[folder_name]
+
+    files_to_move, category_counts, already_organized = scan_folder(folder)
     total_files = len(files_to_move)
 
     if total_files == 0:
         print("No files to organise.")
+        print(f"Already organized: {already_organized}")
         return
 
-    print(f"\nFound {total_files} files in {downloads}")
+    print(f"\nFound {total_files} files in {folder}")
 
     display_summary(category_counts)
-     
-    move_files(files_to_move)
+
+    print(f"Already organized: {already_organized}")
+    while True:
+
+        dry_run = input("\nDry run? (y/n): ").strip().lower()
+
+        if dry_run == "y": 
+            move_files(files_to_move, folder, dry_run=True)
+        elif dry_run == "n":
+            move_files(files_to_move, folder)
+        else:
+            print("Please enter y or n.")
 
 if __name__ == "__main__":
     main()
